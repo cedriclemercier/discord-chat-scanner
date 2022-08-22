@@ -76,7 +76,7 @@ def setup(driver):
 
     login('TOKEN');
     """.replace("TOKEN", TOKEN)
-    driver.get(CHAT_URL_TEST) # test
+    driver.get(CHAT_URL) # test with CHAT_URL_TEST
     driver.execute_script(script)
 
 
