@@ -1,4 +1,4 @@
 python-decouple
-discord
+discord.py
 selenium
 webdriver_manager
