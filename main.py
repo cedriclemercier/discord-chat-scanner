@@ -49,14 +49,13 @@ async def scan(driver):
     async with aiohttp.ClientSession() as session:
         webhook = Webhook.from_url(WEBHOOK_URL, session=session)
     
-        all_links = []
-        buy_link =  ''
+        last_link = ''
         
         try:
             # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
-            links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")
+            links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[5:]
             
-            print("Scanning...")
+            print("Starting scan...")
             
             if len(links) != 0:
                 print(f"Length: {len(links)}")
@@ -64,15 +63,17 @@ async def scan(driver):
                 
                 last_link = links[-1].text
             
+            print("Scanning...")
             while True:
                 
                 # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
                 
-                links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")
+                links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[5:]
                 
                 if len(links) != 0:
                     if last_link != links[-1].text:
                         last_link = links[-1].text
+                        print(f"Last link: {last_link}")
                         dt = datetime.now()
                         print(f"{dt} : {last_link}")
                         await webhook.send(f"@here {last_link}", wait=True)
