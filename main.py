@@ -27,6 +27,41 @@ TOKEN = os.environ.get('TOKEN', config('TOKEN'))
 urls= ["https://opensea.io/","https://twitter.com/","https://etherscan.io/"]
 
 
+def getLinks(driver):
+    links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-2:]
+    return links
+    
+
+class DiscordListener:
+    
+    def __init__(self, driver):
+        self.driver = driver
+        self.reset()
+        
+        links = getLinks(self.driver)
+        
+        for link in links:
+            self.blacklist.append(link.text)
+            
+    def reset(self):
+        
+        self.blacklist = []
+        self.newLink = None
+        
+    def newLinks(self):
+        links = getLinks(self.driver)
+        NT = 0
+        
+        for link in links:
+            if not link.text in self.blacklist:
+                self.blacklist.append(link.text)
+                self.newLink = links
+                NT = 1
+            else:
+                pass
+        return NT
+
+
 def setup(driver):
     # driver.get(CHAT_URL) #turts
     script = """
@@ -41,7 +76,7 @@ def setup(driver):
 
     login('TOKEN');
     """.replace("TOKEN", TOKEN)
-    driver.get(CHAT_URL) # test
+    driver.get(CHAT_URL_TEST) # test
     driver.execute_script(script)
 
 
@@ -51,29 +86,34 @@ async def scan(driver):
     
         last_link = ''
         
+        links = []
+        
         try:
-            # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
-            links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[3:]
             
-            print("Starting scan...")
+            Listener = DiscordListener(driver)
             
-            if len(links) != 0:
-                print(f"Length: {len(links)}")
-                print(links[-1].text)
+            # links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-2:]
+            # print(len(links))
+            
+            # for link in links:
+            #     print(link.text)
+            # print("Starting scan...")
+            
+            # if len(links) != 0:
+            #     print(f"Length: {len(links)}")
+            #     print(links[-1].text)
                 
-                last_link = links[-1].text
+            #     last_link = links[-1].text
             
             print("Scanning...")
             while True:
-                
-                # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
-                
-                links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[3:]
+                pass
+                if Listener.newLinks():
+                    links = Listener.newLink
                 
                 if len(links) != 0:
                     if last_link != links[-1].text:
                         last_link = links[-1].text
-                        print(f"Last link: {last_link}")
                         dt = datetime.now()
                         print(f"{dt} : {last_link}")
                         await webhook.send(f"@here {last_link}", wait=True)
