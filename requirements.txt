@@ -2,3 +2,4 @@ python-decouple
 discord.py
 selenium
 webdriver_manager
+aiohttp

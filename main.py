@@ -1,4 +1,4 @@
-import os, time, sys, argparse
+import os, time, sys, argparse, aiohttp, asyncio
 
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -9,7 +9,7 @@ from webdriver_manager.opera import OperaDriverManager
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.utils import ChromeType
 from selenium.webdriver.chrome.options import Options
-from discord import Webhook, RequestsWebhookAdapter
+from discord import Webhook
 
 from utils import login, getConfig
 
@@ -45,42 +45,43 @@ def setup(driver):
     driver.execute_script(script)
 
 
-def scan(driver):
-    webhook = Webhook.from_url(WEBHOOK_URL, adapter=RequestsWebhookAdapter())
+async def scan(driver):
+    async with aiohttp.ClientSession() as session:
+        webhook = Webhook.from_url(WEBHOOK_URL, session=session)
     
-    all_links = []
-    buy_link =  ''
-    
-    try:
-        # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
-        links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")
+        all_links = []
+        buy_link =  ''
         
-        print("Scanning...")
-        
-        if len(links) != 0:
-            print(f"Length: {len(links)}")
-            print(links[-1].text)
-            
-            last_link = links[-1].text
-        
-        while True:
-            
+        try:
             # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
-            
             links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")
             
-            if len(links) != 0:
-                if last_link != links[-1].text:
-                    last_link = links[-1].text
-                    dt = datetime.now()
-                    print(f"{dt} : {last_link}")
-                    webhook.send(f"@here {last_link}")
-                    
-    except Exception as error:
-        print(error)
-        webhook.send(error)
+            print("Scanning...")
             
-def main():
+            if len(links) != 0:
+                print(f"Length: {len(links)}")
+                print(links[-1].text)
+                
+                last_link = links[-1].text
+            
+            while True:
+                
+                # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
+                
+                links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")
+                
+                if len(links) != 0:
+                    if last_link != links[-1].text:
+                        last_link = links[-1].text
+                        dt = datetime.now()
+                        print(f"{dt} : {last_link}")
+                        await webhook.send(f"@here {last_link}", wait=True)
+                        
+        except Exception as error:
+            print(error)
+            await webhook.send(error)
+            
+async def main():
     # Create the parser
     parser = argparse.ArgumentParser(description='Args parse')
     # Add the arguments
@@ -110,7 +111,6 @@ def main():
     setup(driver)
     login(driver)
     print("Logged in!")
-    scan(driver)
+    await scan(driver)
     
-    
-main()
+asyncio.run(main())
