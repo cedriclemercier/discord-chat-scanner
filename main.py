@@ -41,7 +41,7 @@ def setup(driver):
 
     login('TOKEN');
     """.replace("TOKEN", TOKEN)
-    driver.get(CHAT_URL_TEST) # test
+    driver.get(CHAT_URL) # test
     driver.execute_script(script)
 
 
