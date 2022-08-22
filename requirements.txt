@@ -1,0 +1,4 @@
+python-decouple
+discord
+selenium
+webdriver_manager
