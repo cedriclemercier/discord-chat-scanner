@@ -53,7 +53,7 @@ async def scan(driver):
         
         try:
             # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
-            links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[5:]
+            links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[3:]
             
             print("Starting scan...")
             
@@ -68,7 +68,7 @@ async def scan(driver):
                 
                 # links = driver.find_elements(By.XPATH, "//a[contains(text(),'opensea')]")
                 
-                links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[5:]
+                links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[3:]
                 
                 if len(links) != 0:
                     if last_link != links[-1].text:
