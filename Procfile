@@ -1,2 +1,1 @@
-normal: python main.py normal
-qr: python main.py
+start: python main.py --type prod --headless yes
