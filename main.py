@@ -1,4 +1,4 @@
-import os, time, sys, argparse, aiohttp, asyncio
+import os, time, sys, argparse, aiohttp, asyncio, json
 
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -11,7 +11,7 @@ from webdriver_manager.core.utils import ChromeType
 from selenium.webdriver.chrome.options import Options
 from discord import Webhook
 
-from utils import login, getConfig
+from utils import login
 
 from decouple import config
 from datetime import datetime
@@ -26,6 +26,12 @@ TOKEN = os.environ.get('TOKEN', config('TOKEN'))
 
 urls= ["https://opensea.io/","https://twitter.com/","https://etherscan.io/"]
 
+def getConfig():
+    configFile = open("config.json", 'r')
+    return list(json.load(configFile).values())
+
+#gets config
+urls = getConfig()[0]
 
 def getLinks(driver):
     links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-2:]
@@ -77,6 +83,7 @@ def setup(driver):
     login('TOKEN');
     """.replace("TOKEN", TOKEN)
     driver.get(CHAT_URL) # test with CHAT_URL_TEST
+    # driver.get(CHAT_URL_TEST) # test with CHAT_URL_TEST
     driver.execute_script(script)
 
 
@@ -92,22 +99,8 @@ async def scan(driver):
             
             Listener = DiscordListener(driver)
             
-            # links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-2:]
-            # print(len(links))
-            
-            # for link in links:
-            #     print(link.text)
-            # print("Starting scan...")
-            
-            # if len(links) != 0:
-            #     print(f"Length: {len(links)}")
-            #     print(links[-1].text)
-                
-            #     last_link = links[-1].text
-            
             print("Scanning...")
             while True:
-                pass
                 if Listener.newLinks():
                     links = Listener.newLink
                 
@@ -132,7 +125,7 @@ async def main():
     args = parser.parse_args()
     
     options = Options()
-    options.add_argument("--disable-gpu")
+    # options.add_argument("--disable-gpu")
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
     
     if args.headless == 'yes':
