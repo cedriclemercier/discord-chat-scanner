@@ -23,9 +23,6 @@ CHAT_URL = os.environ.get('CHAT_URL', config('CHAT_URL'))
 CHAT_URL_TEST = os.environ.get('CHAT_URL_TEST', config('CHAT_URL_TEST'))
 TOKEN = os.environ.get('TOKEN', config('TOKEN'))
 
-
-urls= ["https://opensea.io/","https://twitter.com/","https://etherscan.io/"]
-
 def getConfig():
     configFile = open("config.json", 'r')
     return list(json.load(configFile).values())

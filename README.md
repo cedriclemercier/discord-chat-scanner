@@ -1,3 +1,3 @@
 # Discord scanner
 
-Scans for opensea, etherscan or twitter links in a discord channel using selenium
+Scans for keywords or links in a discord chat then sends a notif to another chat
