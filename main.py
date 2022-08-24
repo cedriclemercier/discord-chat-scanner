@@ -2,6 +2,7 @@ import os, time, sys, argparse, aiohttp, asyncio, json
 
 from dotenv import load_dotenv
 from selenium import webdriver
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
@@ -28,6 +29,7 @@ def getConfig():
     return list(json.load(configFile).values())
 
 #gets config
+#json file containing  { urls: ["url1", "url2"..] }
 urls = getConfig()[0]
 
 def getLinks(driver):
@@ -66,7 +68,6 @@ class DiscordListener:
 
 
 def setup(driver):
-    # driver.get(CHAT_URL) #turts
     script = """
     function login(token) {
         setInterval(() => {
@@ -79,7 +80,7 @@ def setup(driver):
 
     login('TOKEN');
     """.replace("TOKEN", TOKEN)
-    driver.get(CHAT_URL) # test with CHAT_URL_TEST
+    driver.get(CHAT_URL_TEST) # test with CHAT_URL_TEST
     # driver.get(CHAT_URL_TEST) # test with CHAT_URL_TEST
     driver.execute_script(script)
 
@@ -106,19 +107,24 @@ async def scan(driver):
                         last_link = links[-1].text
                         dt = datetime.now()
                         print(f"{dt} : {last_link}")
-                        await webhook.send(f"@here {last_link}", wait=True)
-                        
+                        await webhook.send(f"@here {last_link} \nLink to chat: {CHAT_URL}", wait=True)
+        except StaleElementReferenceException:
+            err = "State element issue, rescanning..."
+            await webhook.send(err)
+            print(err)
+            await scan(driver)
         except Exception as error:
             print(error)
-            await webhook.send(str(error) + "\nRestarting...)
+            await webhook.send(str(error) + "\nRestarting...")
             print("Error, restarting...")
+            await scan(driver)
             
 async def main():
     # Create the parser
     parser = argparse.ArgumentParser(description='Args parse')
     # Add the arguments
-    parser.add_argument('--type', action='store', type=str, required=True)
-    parser.add_argument('--headless', action='store', type=str, required=True)
+    parser.add_argument('--type', action='store', type=str, choices=["dev","prod"], default="dev")
+    parser.add_argument('--headless', action='store', type=str, choices=["yes", "no"],default="yes")
     
     args = parser.parse_args()
     
