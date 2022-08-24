@@ -110,7 +110,8 @@ async def scan(driver):
                         
         except Exception as error:
             print(error)
-            await webhook.send(error)
+            await webhook.send(str(error) + "\nRestarting...)
+            print("Error, restarting...")
             
 async def main():
     # Create the parser

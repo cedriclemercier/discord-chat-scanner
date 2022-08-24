@@ -1,2 +1,3 @@
 #!/bin/sh
-python main.py --headless yes --type no
+cd /var/www/discord-chat-scanner/code
+python3 -u main.py --headless yes --type no
