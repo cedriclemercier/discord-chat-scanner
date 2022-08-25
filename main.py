@@ -33,7 +33,7 @@ def getConfig():
 urls = getConfig()[0]
 
 def getLinks(driver):
-    links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-2:]
+    links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-4:]
     return links
     
 
@@ -85,39 +85,43 @@ def setup(driver):
     driver.execute_script(script)
 
 
-async def scan(driver):
+async def scan(driver, webhook):
+    Listener = DiscordListener(driver)
+            
+    print("Scanning...")
+    
+    last_link = ''
+    links = []
+    
+    while True:
+        
+        if Listener.newLinks():
+            links = Listener.newLink
+        
+        if len(links) != 0:
+            if last_link != links[-1].text:
+                last_link = links[-1].text
+                dt = datetime.now()
+                print(f"{dt} : {last_link}")
+                await webhook.send(f"@here {last_link} \nLink to chat: {CHAT_URL}", wait=True)
+
+async def scanner(driver):
     async with aiohttp.ClientSession() as session:
         webhook = Webhook.from_url(WEBHOOK_URL, session=session)
-    
-        last_link = ''
-        
-        links = []
         
         try:
+            await scan(driver, webhook)
             
-            Listener = DiscordListener(driver)
-            
-            print("Scanning...")
-            while True:
-                if Listener.newLinks():
-                    links = Listener.newLink
-                
-                if len(links) != 0:
-                    if last_link != links[-1].text:
-                        last_link = links[-1].text
-                        dt = datetime.now()
-                        print(f"{dt} : {last_link}")
-                        await webhook.send(f"@here {last_link} \nLink to chat: {CHAT_URL}", wait=True)
         except StaleElementReferenceException:
             err = "State element issue, rescanning..."
             await webhook.send(err)
             print(err)
-            await scan(driver)
+            await scan(driver, webhook)
         except Exception as error:
             print(error)
             await webhook.send(str(error) + "\nRestarting...")
             print("Error, restarting...")
-            await scan(driver)
+            await scan(driver, webhook)
             
 async def main():
     # Create the parser
@@ -149,6 +153,6 @@ async def main():
     setup(driver)
     login(driver)
     print("Logged in!")
-    await scan(driver)
+    await scanner(driver)
     
 asyncio.run(main())
