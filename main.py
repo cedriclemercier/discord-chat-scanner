@@ -1,4 +1,5 @@
-import os, time, sys, argparse, aiohttp, asyncio, json
+from doctest import testmod
+import os, time, sys, argparse, aiohttp, asyncio, json, re
 
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -36,6 +37,12 @@ def getLinks(driver):
     links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-4:]
     return links
     
+    
+def getOnlyLinks(driver):
+    msg_links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-1:]
+    last_link = [re.search("(?P<url>https?://[^\s]+)", link.text).group("url") for link in msg_links]
+    return last_link
+    
 
 class DiscordListener:
     
@@ -43,10 +50,10 @@ class DiscordListener:
         self.driver = driver
         self.reset()
         
-        links = getLinks(self.driver)
+        links = getOnlyLinks(self.driver)
         
         for link in links:
-            self.blacklist.append(link.text)
+            self.blacklist.append(link)
             
     def reset(self):
         
@@ -54,12 +61,12 @@ class DiscordListener:
         self.newLink = None
         
     def newLinks(self):
-        links = getLinks(self.driver)
+        links = getOnlyLinks(self.driver)
         NT = 0
         
         for link in links:
-            if not link.text in self.blacklist:
-                self.blacklist.append(link.text)
+            if not link in self.blacklist:
+                self.blacklist.append(link)
                 self.newLink = links
                 NT = 1
             else:
@@ -95,15 +102,38 @@ async def scan(driver, webhook):
     
     while True:
         
+        #NEW STYLE===============================
+        
         if Listener.newLinks():
             links = Listener.newLink
+            
+        if len(links) < 1:
+            continue
         
-        if len(links) != 0:
-            if last_link != links[-1].text:
-                last_link = links[-1].text
-                dt = datetime.now()
-                print(f"{dt} : {last_link}")
-                await webhook.send(f"@here {last_link} \nLink to chat: {CHAT_URL}", wait=True)
+        if last_link != links[-1]:
+            last_link = links[-1]
+            dt = datetime.now()
+            print(f"{dt} : {last_link}")
+            await webhook.send(f"@here {last_link} \nLink to chat: {CHAT_URL}", wait=True)
+        
+        #========================================
+        
+        # if Listener.newLinks():
+        #     links = Listener.newLink
+        #     for l in links:
+        #         print(f'--------------------\n {l.text} \n-======-----------------------')
+        
+        # # without Listener class (TEMP)
+        # msg_links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-5:]
+        # links = [re.search("(?P<url>https?://[^\s]+)", msg.text).group("url") for msg in msg_links]
+          
+        
+        # if len(links) != 0:
+        #     if last_link != links[-1].text:
+        #         last_link = links[-1].text
+        #         dt = datetime.now()
+        #         print(f"{dt} : {last_link}")
+        #         await webhook.send(f"@here {last_link} \nLink to chat: {CHAT_URL}", wait=True)
 
 async def scanner(driver):
     async with aiohttp.ClientSession() as session:
@@ -112,10 +142,11 @@ async def scanner(driver):
         try:
             await scan(driver, webhook)
             
-        except StaleElementReferenceException:
+        except StaleElementReferenceException as error:
             err = "State element issue, rescanning..."
             await webhook.send(err)
             print(err)
+            print(error)
             await scan(driver, webhook)
         except Exception as error:
             print(error)
