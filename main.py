@@ -34,13 +34,13 @@ def getConfig():
 urls = getConfig()[0]
 
 def getLinks(driver):
-    links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-4:]
+    links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-1:]
     return links
     
     
 def getOnlyLinks(driver):
-    msg_links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-1:]
-    last_link = [re.search("(?P<url>https?://[^\s]+)", link.text).group("url") for link in msg_links]
+    msg_links = driver.find_elements(By.XPATH, f"//*[contains(., '{urls[0]}') or contains(., '{urls[1]}') or contains(., '{urls[2]}')]")[-3:]
+    last_link = [re.search("(?P<url>https?://[^\s]+)", link.text).group("url") if re.search("(?P<url>https?://[^\s]+)", link.text) else '' for link in msg_links]
     return last_link
     
 
@@ -87,25 +87,26 @@ def setup(driver):
 
     login('TOKEN');
     """.replace("TOKEN", TOKEN)
-    driver.get(CHAT_URL_TEST) # test with CHAT_URL_TEST
+    driver.get(CHAT_URL) # test with CHAT_URL_TEST
     # driver.get(CHAT_URL_TEST) # test with CHAT_URL_TEST
     driver.execute_script(script)
 
 
 async def scan(driver, webhook):
-    Listener = DiscordListener(driver)
+    # Listener = DiscordListener(driver)
             
     print("Scanning...")
     
     last_link = ''
-    links = []
+    links = getOnlyLinks(driver)
     
     while True:
         
         #NEW STYLE===============================
         
-        if Listener.newLinks():
-            links = Listener.newLink
+        # if Listener.newLinks():
+        #     links = Listener.newLink
+        links = getOnlyLinks(driver)
             
         if len(links) < 1:
             continue
