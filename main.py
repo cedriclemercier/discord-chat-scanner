@@ -1,5 +1,5 @@
 from doctest import testmod
-import os, time, sys, argparse, aiohttp, asyncio, json, re
+import os, time, sys, argparse, aiohttp, asyncio, json, re, platform
 
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -173,12 +173,17 @@ async def main():
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--no-sandbox")
     
+    webdriver_path = './chromedriver'
+    if platform.system() == 'Windows':
+        webdriver_path = './chromedriver.exe'
+        print(webdriver_path)
     
     if args.type == 'prod':
         print("Production settings with binaries...")
         options.binary_location = os.environ.get('GOOGLE_CHROME_BIN', config('GOOGLE_CHROME_BIN'))
     
-    driver = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.BRAVE).install(), options=options)
+    # driver = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.BRAVE).install(), options=options)
+    driver = webdriver.Chrome(webdriver_path)
     print("Assertion - successfully found chrome driver")
         
     print("--------- python main.y (optional arg: normal - to login via password) -----------")
